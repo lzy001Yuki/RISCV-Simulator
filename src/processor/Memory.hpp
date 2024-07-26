@@ -13,7 +13,7 @@ public:
     template<class T, int len>
     void writeAddr(u32& addr, T input) {
         for (int i = 0; i < len / 8; i++) {
-            mem[addr + i] = input & 11111111;
+            mem[addr + i] = input & ((1<<9) - 1);
             input = input >> 8;
         }
     }
@@ -21,7 +21,7 @@ public:
     template <class T, int len>
     T getAddr(u32& addr) {
         // reverse
-        T ans;
+        T ans = 0;
         for (int i = 0; i < len / 8; i++) {
             ans += mem[addr + i] << (8 * i);
         }

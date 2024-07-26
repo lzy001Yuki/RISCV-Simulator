@@ -19,9 +19,10 @@ public:
     }
     void pop() {
         head = (head + 1) % N;
+        length--;
     }
     T& operator[](int index) {
-        index %= N;
+        index = (index - 1) % N;
         return data[index];
     }
     int size() {return length;}

@@ -33,7 +33,7 @@ public:
     bool full();
     void flush();
     rsNode Calc();
-    void Issue(ReorderBuffer &rob, Register &r, Decode &decode);
+    void Issue(ReorderBuffer &rob, Register &r, Decode &decode, u32 &nowPC);
     bool Write(CDB &cdb, ReorderBuffer &rob);
     void fetchData(CDB &cdb);
 };
@@ -52,12 +52,23 @@ void ReservationStation::flush() {
         rss = rsNode();
     }
 }
-void ReservationStation::Issue(ReorderBuffer &rob, Register &r, Decode &decode) {
+void ReservationStation::Issue(ReorderBuffer &rob, Register &r, Decode &decode, u32 &nowPC) {
     int index = 0;
     while (rs[index].busy) index++;
     rs[index].label = rob.tag; // increment of tag
     rs[index].status = issue;
+    rs[index].busy = true;
     rs[index].orderType = decode.orderType;
+    if (decode.type == 'U') {
+        rs[index].V1 = decode.imm;
+        if (decode.orderType == LUI) rs[index].V2 = 0;
+        else if (decode.orderType == AUIPC) rs[index].V2 = nowPC;
+        return;
+    } else if (decode.type == 'J') {
+        rs[index].V1 = 4;
+        rs[index].V2 = nowPC;
+        return;
+    }
     // I-Type rs+imm
     int label1 = r.Reg[decode.rs1].label;
     int label2 = r.Reg[decode.rs2].label;
@@ -77,9 +88,8 @@ void ReservationStation::Issue(ReorderBuffer &rob, Register &r, Decode &decode) 
 }
 
 rsNode ReservationStation::Calc() {
-    bool flag = true;
     for (int i = 0; i < RSSIZE; i++) {
-        if (rs[i].status == issue && !rs[i].Q1 && !rs[i].Q2) {
+        if (rs[i].status == issue && !rs[i].Q1 && !rs[i].Q2 && rs[i].busy) {
             rs[i].status = execute;
             rs[i].res = ALU::Calc(rs[i].orderType, rs[i].V1, rs[i].V2, true);
             return rs[i];
@@ -92,10 +102,17 @@ rsNode ReservationStation::Calc() {
 bool ReservationStation::Write(CDB &cdb, ReorderBuffer &rob) {
     for (int i = 0; i < RSSIZE; i++) {
         if (rs[i].status == execute) {
+            std::cout<<"writeRs\t";rob.robBuffer[rs[i].label].decode.print();
             rs[i].status = write;
+            if (rs[i].label == 9) {
+                int y = 2;
+            }
             cdb.broadcast(rs[i].label, rs[i].res);
             rs[i].busy = false;
+            rs[i].res = 0;
+            rs[i] = rsNode();
             rob.robBuffer[rs[i].label].ready = true;
+            rob.robBuffer[rs[i].label].res = rs[i].res;
             return true;
         }
     }
@@ -104,14 +121,19 @@ bool ReservationStation::Write(CDB &cdb, ReorderBuffer &rob) {
 
 void ReservationStation::fetchData(CDB &cdb) {
     if (!cdb.bus.busy) return;
+    if (cdb.bus.label == 15) {
+        int y = 2;
+    }
     for (int i = 0; i < RSSIZE; i++) {
-        if (rs[i].status == issue) {
-            if (rs[i].Q1 == cdb.bus.label) {
-                rs[i].V1 = cdb.bus.val;
-                rs[i].Q1 = 0;
-            } else if (rs[i].Q2 == cdb.bus.label) {
-                rs[i].V2 = cdb.bus.val;
-                rs[i].Q2 = 0;
+        if (rs[i].busy) {
+            if (rs[i].status == issue) {
+                if (rs[i].Q1 == cdb.bus.label) {
+                    rs[i].V1 = cdb.bus.val;
+                    rs[i].Q1 = 0;
+                } else if (rs[i].Q2 == cdb.bus.label) {
+                    rs[i].V2 = cdb.bus.val;
+                    rs[i].Q2 = 0;
+                }
             }
         }
     }

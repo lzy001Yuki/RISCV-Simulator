@@ -22,6 +22,7 @@ public:
     void enQueue(u32 &pc, Decode &decode, bool flag);
     void deQueue();
     bool full();
+    bool empty();
     opNode front();
     void flush();
 };
@@ -42,4 +43,5 @@ void opQueue::flush() {
     end = false;
     opBuffer.clear();
 }
+bool opQueue::empty() {return opBuffer.empty();}
 #endif //RISCV_SIMULATOR_OPQUEUE_H

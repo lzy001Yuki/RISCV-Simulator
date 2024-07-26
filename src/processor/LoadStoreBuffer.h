@@ -6,6 +6,7 @@ const int LSBSIZE = 32;
 enum nodeType{load, store};
 class lsbNode: protected rsNode{
     friend class LoadStoreBuffer;
+    friend class CPU;
 private:
    // Vj, Vk for offset addr(load)
    // Vj for addr, Vk for addr(store)
@@ -73,6 +74,7 @@ void LoadStoreBuffer::Issue(ReorderBuffer &rob, Register &r, Decode &decode, int
     lsb[index].label = rob.tag;
     lsb[index].orderType = decode.orderType;
     lsb[index].status = issue;
+    lsb[index].busy = true;
     lsb[index].time = t;
     if (decode.type == 'L') {
         lsb[index].los = load;
@@ -80,7 +82,7 @@ void LoadStoreBuffer::Issue(ReorderBuffer &rob, Register &r, Decode &decode, int
         if (label1) {
             if (rob.robBuffer[label1].ready) lsb[index].V1 = rob.robBuffer[label1].res;
             else lsb[index].Q1 = label1;
-        } else lsb[index].V1 = rob.robBuffer[decode.rs1].res;
+        } else lsb[index].V1 = r.Reg[decode.rs1].val;
         lsb[index].Q2 = 0;
         lsb[index].V2 = decode.imm;
     } else {
@@ -90,18 +92,18 @@ void LoadStoreBuffer::Issue(ReorderBuffer &rob, Register &r, Decode &decode, int
         if (label1) {
             if (rob.robBuffer[label1].ready) lsb[index].V1 += rob.robBuffer[label1].res;
             else lsb[index].Q1 = label1;
-        } else lsb[index].V1 += rob.robBuffer[decode.rs1].res;
+        } else lsb[index].V1 += r.Reg[decode.rs1].val;
         int label2 = r.Reg[decode.rs2].label;
         if (label2) {
             if (rob.robBuffer[label2].ready) lsb[index].V2 = rob.robBuffer[label2].res;
             else lsb[index].Q2 = label2;
-        } else lsb[index].V2 = rob.robBuffer[decode.rs2].res;
+        } else lsb[index].V2 = r.Reg[decode.rs2].val;
     }
 }
 
 void LoadStoreBuffer::Execute(ReorderBuffer &rob) {
     for (int i = 0; i < LSBSIZE; i++) {
-        if (lsb[i].status == issue && !lsb[i].Q1 && !lsb[i].Q2) {
+        if (lsb[i].status == issue && !lsb[i].Q1 && !lsb[i].Q2 &&lsb[i].busy) {
             if (lsb[i].los == load) {
                 lsb[i].addr = lsb[i].V1 + lsb[i].V2;
                 lsb[i].status = execute;
@@ -124,7 +126,9 @@ void LoadStoreBuffer::Load(Memory &mem) {
             lsb[cur.loadIndex].status = write;
             if (lsb[cur.loadIndex].orderType == LB) lsb[cur.loadIndex].res = Decode::extension((u32)mem.getAddr<u8, 8>(lsb[cur.loadIndex].addr), 8);
             else if (lsb[cur.loadIndex].orderType == LH) lsb[cur.loadIndex].res = Decode::extension((u32)mem.getAddr<u16, 16>(lsb[cur.loadIndex].addr), 16);
-            else if (lsb[cur.loadIndex].orderType == LW) lsb[cur.loadIndex].res = Decode::extension((u32)mem.getAddr<u32, 32>(lsb[cur.loadIndex].addr),32);
+            else if (lsb[cur.loadIndex].orderType == LW) {
+                lsb[cur.loadIndex].res = Decode::extension((u32)mem.getAddr<u32, 32>(lsb[cur.loadIndex].addr),32);
+            }
             else if (lsb[cur.loadIndex].orderType == LBU) lsb[cur.loadIndex].res = (u32)mem.getAddr<u8, 8>(lsb[cur.loadIndex].addr);
             else if (lsb[cur.loadIndex].orderType == LHU) lsb[cur.loadIndex].res = (u32)mem.getAddr<u16, 16>(lsb[cur.loadIndex].addr);
             cur.loadIndex = 0;
@@ -159,7 +163,7 @@ void LoadStoreBuffer::Load(Memory &mem) {
 
 bool LoadStoreBuffer::Write(CDB &cdb) {
     for (auto &it: lsb) {
-        if (it.status == write && it.los == load) {
+        if (it.status == write && it.los == load && it.busy) {
             cdb.broadcast(it.label, it.res);
             it.busy = false;
             return true;
@@ -180,6 +184,7 @@ void LoadStoreBuffer::Commit(robNode &rn) {
             lsb[i].status = commit;
             cur.storeIndex = i;
             cur.storeTime = 3;
+            break;
         }
     }
 }
@@ -191,7 +196,9 @@ void LoadStoreBuffer::Store(Memory &mem, ReorderBuffer &rob) {
             lsbNode curNode = lsb[cur.storeIndex];
             if (curNode.orderType == SB) mem.writeAddr<u8, 8>(curNode.addr, curNode.res & 11111111);
             else if (curNode.orderType == SH) mem.writeAddr<u16, 16>(curNode.addr, curNode.res & 0xffff);
-            else if (curNode.orderType == SW) mem.writeAddr<u32, 32>(curNode.addr, curNode.res);
+            else if (curNode.orderType == SW) {
+                mem.writeAddr<u32, 32>(curNode.addr, curNode.res);
+            }
             lsb[cur.storeIndex].busy = false;
             cur.storeIndex = 0;
             rob.pop();

@@ -3,6 +3,7 @@
 #include<iostream>
 #include "../utils/Type.hpp"
 
+
 class Decode{
     friend class ALU;
     friend class ReservationStation;
@@ -13,6 +14,7 @@ protected:
     char type;
     u32 code; // std::cin>>std::hex>>code
     Type orderType;
+    std::string t;
     u32 imm = 0;
     u8 rd = 0, rs1 = 0, rs2 = 0, funct3, funct7;
 
@@ -22,11 +24,13 @@ public:
     Decode() = default;
     explicit Decode(u32 &input) : code(input){}
     void decode();
+    void print();
 };
 
 template<class T>
 T Decode::get(int l, int r) {
-    T ans = code & ((1<<(r + 1)) - 1);
+    u32 ans = code;
+    if (r < 31) ans = code & ((1<<(r + 1)) - 1);
     return ans >> l;
 }
 
@@ -46,52 +50,10 @@ u32 Decode::extension(u32 data, int len) {
 void Decode::decode() {
     u8 op = get<u8>(0, 6);
     switch(op) {
-        case 0x13:
-            // I-type
-            type = 'I';
-            funct3 = get<u8>(12, 14);
-            rd = get<u8>(7, 11);
-            rs1 = get<u8>(15, 19);
-            switch(funct3) {
-                case 0:
-                    orderType = ADDI;
-                    imm = extension(get<u32> (20, 31), 12);
-                    break;
-                case 1:
-                    orderType = SLLI;
-                    imm = get<u32>(20, 31);
-                case 2:
-                    orderType = SLTI;
-                    imm = extension(get<u32> (20, 31), 12);
-                    break;
-                case 3:
-                    orderType = SLTUI;
-                    imm = extension(get<u32>(20, 31), 12);
-                    break;
-                case 4:
-                    orderType = XORI;
-                    imm = extension(get<u32>(20, 31), 12);
-                    break;
-                case 5:
-                    imm = get<u32>(20, 31);
-                    if ((imm & 10) >> 1) {
-                        orderType = SRAI;
-                        imm = imm << 2 >> 2;
-                    } else orderType = SRLI;
-                    break;
-                case 6:
-                    orderType = ORI;
-                    imm = extension(get<u32>(20, 31), 12);;
-                    break;
-                case 7:
-                    orderType = ANDI;
-                    imm = extension(get<u32>(20, 31), 12);
-                    break;
-            }
-            break;
         case 0x17:
             type = 'U';
             orderType = AUIPC;
+            t = "AUIPC";
             rd = get<u8>(7, 11);
             imm = extension(get<u32>(12, 31), 20) << 12;
             break;
@@ -99,6 +61,7 @@ void Decode::decode() {
             // U-type
             type = 'U';
             orderType = LUI;
+            t = "LUI";
             rd = get<u8>(7, 11);
             imm = extension(get<u32>(12, 31), 20) << 12;
             break;
@@ -108,22 +71,26 @@ void Decode::decode() {
             funct3 = get<u8>(12, 14);
             rs1 = get<u8>(15, 19);
             rs2 = get<u8>(20, 24);
-            imm = extension((get<u32>(7, 11) + get<u32>(25, 31)) << 5, 12);
+            imm = extension((get<u32>(7, 11)) + (get<u32>(25, 31) << 5), 12);
             switch (funct3) {
                 case 0:
                     orderType = SB;
+                    t = "SB";
                     break;
                 case 1:
                     orderType = SH;
+                    t = "SH";
                     break;
                 case 2:
                     orderType = SW;
+                    t = "SW";
                     break;
             }
             break;
         case 0x6f:
             type = 'J';
             orderType = JAL;
+            t = "JAL";
             rd = get<u8>(7, 11);
             rs1 = get<u8>(15, 19);
             imm = extension((get<u32>(31, 31)<<20) + (get<u32>(12, 19)<<12) + (get<u32>(20, 20)<<11) +
@@ -132,30 +99,37 @@ void Decode::decode() {
         case 0x67:
             type ='I';
             orderType = JALR;
+            t = "JALR";
             rd = get<u8>(7, 11);
             rs1 = get<u8>(15, 19);
             imm = extension(get<u32>(20, 31)<<1, 13);
             break;
         case 0x03:
-            type = 'I';
+            type = 'L';
             funct3 = get<u8>(12, 14);
+            rd = get<u8>(7, 11);
             rs1 = get<u8>(15, 19);
-            rs2 = get<u8>(20, 24);
+            imm = extension(get<u32>(20, 31), 12);
             switch(funct3) {
                 case 0:
                     orderType = LB;
+                    t = "LB";
                     break;
                 case 1:
                     orderType = LH;
+                    t = "LH";
                     break;
                 case 2:
                     orderType = LW;
+                    t = "LW";
                     break;
                 case 4:
                     orderType = LBU;
+                    t = "LBU";
                     break;
                 case 5:
                     orderType = LHU;
+                    t = "LHU";
                     break;
             }
             break;
@@ -168,30 +142,48 @@ void Decode::decode() {
             rs2 = get<u8>(20, 24);
             switch(funct3) {
                 case 0:
-                    if ((funct7 >> 5) & 1) orderType = SUB;
-                    else orderType = ADD;
+                    if ((funct7 >> 5) & 1) {
+                        orderType = SUB;
+                        t = "SUB";
+                    }
+                    else {
+                        orderType = ADD;
+                        t = "ADD";
+                    }
                     break;
                 case 1:
                     orderType = SLL;
+                    t = "SLL";
                     break;
                 case 2:
                     orderType = SLT;
+                    t = "SLT";
                     break;
                 case 3:
                     orderType = SLTU;
+                    t = "SLTU";
                     break;
                 case 4:
                     orderType = XOR;
+                    t = "XOR";
                     break;
                 case 5:
-                    if ((funct7 >> 5) & 1) orderType = SRA;
-                    else orderType = SRL;
+                    if ((funct7 >> 5) & 1) {
+                        orderType = SRA;
+                        t = "SRA";
+                    }
+                    else {
+                        orderType = SRL;
+                        t = "SRL";
+                    }
                     break;
                 case 6:
                     orderType = OR;
+                    t = "OR";
                     break;
                 case 7:
                     orderType = AND;
+                    t = "AND";
                     break;
             }
             break;
@@ -204,26 +196,90 @@ void Decode::decode() {
             switch(funct3) {
                 case 0:
                     orderType = BEQ;
+                    t = "BEQ";
                     break;
                 case 1:
                     orderType = BNE;
+                    t = "BNE";
                     break;
                 case 4:
                     orderType = BLT;
+                    t = "BLT";
                     break;
                 case 5:
                     orderType = BGE;
+                    t = "BGE";
                     break;
                 case 6:
                     orderType = BLTU;
+                    t = "BLTU";
                     break;
                 case 7:
                     orderType = BGEU;
+                    t = "BGEU";
+                    break;
+            }
+            break;
+        case 0x13:
+            // I-type
+            type = 'I';
+            funct3 = get<u8>(12, 14);
+            rd = get<u8>(7, 11);
+            rs1 = get<u8>(15, 19);
+            switch(funct3) {
+                case 0:
+                    orderType = ADDI;
+                    t = "ADDI";
+                    imm = extension(get<u32> (20, 31), 12);
+                    break;
+                case 1:
+                    orderType = SLLI;
+                    t = "SLLI";
+                    imm = get<u32>(20, 31);
+                case 2:
+                    orderType = SLTI;
+                    t = "SLTI";
+                    imm = extension(get<u32> (20, 31), 12);
+                    break;
+                case 3:
+                    orderType = SLTUI;
+                    t = "SLTUI";
+                    imm = extension(get<u32>(20, 31), 12);
+                    break;
+                case 4:
+                    orderType = XORI;
+                    t = "XORI";
+                    imm = extension(get<u32>(20, 31), 12);
+                    break;
+                case 5:
+                    imm = get<u32>(20, 31);
+                    if ((imm & 10) >> 1) {
+                        orderType = SRAI;
+                        t = "SRAI";
+                        imm = imm << 2 >> 2;
+                    } else {
+                        orderType = SRLI;
+                        t = "SRLI";
+                    }
+                    break;
+                case 6:
+                    orderType = ORI;
+                    t = "ORI";
+                    imm = extension(get<u32>(20, 31), 12);;
+                    break;
+                case 7:
+                    orderType = ANDI;
+                    t = "ANDI";
+                    imm = extension(get<u32>(20, 31), 12);
                     break;
             }
             break;
         default:
             break;
     }
+}
+
+void Decode::print() {
+    std::cout<<type<<'\t'<<t<<'\t'<<code<<'\t'<<(int)rs1<<'\t'<<(int)rs2<<'\t'<<(int)rd<<'\t'<<imm<<'\n';
 }
 #endif //RISCV_SIMULATOR_DECODE_H

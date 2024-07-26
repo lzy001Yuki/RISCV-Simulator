@@ -1,7 +1,6 @@
 #ifndef RISCV_SIMULATOR_ALU_H
 #define RISCV_SIMULATOR_ALU_H
 #include"decode.h"
-#include"../src/processor/decode.cpp"
 class ALU{
 public:
     static u32 Calc(Type &op, u32 &in1, u32 &in2, bool status) {

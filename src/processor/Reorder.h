@@ -1,9 +1,8 @@
 #ifndef RISCV_SIMULATOR_REORDER_H
 #define RISCV_SIMULATOR_REORDER_H
 #include"decode.h"
-#include"../utils/queue.hpp"
 #include"CommonDataBus.hpp"
-#include"../src/processor/opQueue.cpp"
+#include"opQueue.h"
 #include"Register.hpp"
 
 /*
@@ -42,9 +41,10 @@ public:
     void addRob(robNode &rob, Register &r);
     bool Issue(Decode &input, u32 &nowPC, u32 &dest, bool pred, Register &r);
     void fetchData(CDB &cdb);
-    void commit(Register &r);
+    void commit(Register &r, CDB &cdb);
     void pop();
     robNode front();
+    void print();
 };
 
 bool ReorderBuffer::empty() {return robBuffer.empty();}
@@ -75,16 +75,16 @@ void ReorderBuffer::fetchData(CDB &cdb) {
     if (!cdb.bus.busy) return;
     robBuffer[cdb.bus.label].ready = true;
     robBuffer[cdb.bus.label].res = cdb.bus.val;
-    cdb.bus.busy = false;
 }
 
-// no need for broadcast when commiting
-void ReorderBuffer::commit(Register &r) {
+
+void ReorderBuffer::commit(Register &r, CDB &cdb) {
     robNode tmp = robBuffer.front();
     if (tmp.ready) {
         if (tmp.decode.type != 'B' && tmp.decode.type != 'S') {
             if (tmp.dest) {
                 r.Reg[tmp.dest].val = tmp.res;
+                cdb.broadcast(tmp.label, tmp.res);
                 // eliminate dependency
                 if (tmp.label == r.Reg[tmp.dest].label) r.Reg[tmp.dest].label = 0;
             }
@@ -93,6 +93,15 @@ void ReorderBuffer::commit(Register &r) {
     }
 }
 
-void ReorderBuffer::pop() {robBuffer.pop();}
+void ReorderBuffer::pop() {
+    robBuffer.pop();
+}
 robNode ReorderBuffer::front() {return robBuffer.front();}
+void ReorderBuffer::print() {
+    std::cout<<"---------------------\n";
+    for (int i = 0; i < robBuffer.size(); i++) {
+        std::cout<<robBuffer[i].decode.t<<'\t'<<robBuffer[i].ready<<'\n';
+    }
+    std::cout<<"------------------------\n";
+}
 #endif //RISCV_SIMULATOR_REORDER_H
