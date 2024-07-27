@@ -3,7 +3,7 @@ project(RISCV_Simulator)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(RISCV_Simulator src/main.cpp
+add_executable(code src/main.cpp
         src/processor/LoadStoreBuffer.h
         src/processor/Prediction.h
         src/processor/Reorder.h
@@ -17,4 +17,6 @@ add_executable(RISCV_Simulator src/main.cpp
         src/processor/CommonDataBus.hpp
         src/processor/opQueue.h
         src/processor/Register.hpp
+        src/utils/stack.hpp
+        src/utils/stack.hpp
 )
