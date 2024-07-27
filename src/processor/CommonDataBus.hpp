@@ -35,6 +35,9 @@ public:
     busNode bus;
     void broadcast(int label, u32 &val) {
         bus = (busNode){true, label, val};
+        if (label == 30) {
+            int y = 2;
+        }
     }
 
     void flushCDB() {

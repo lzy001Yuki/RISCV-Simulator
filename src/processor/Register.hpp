@@ -18,8 +18,9 @@ public:
         for (int i = 0; i < REGSIZE / 2; i++) {
             std::cout<<"reg"<<i*2<<"\'s val:\t"<<Reg[i*2].val;
             //<<"\tlabel:\t"<<Reg[i*2].label<<'\t';
-            std::cout<<"reg"<<i*2+1<<"\'s val:\t"<<Reg[i*2+1].val;
+            std::cout<<"\treg"<<i*2+1<<"\'s val:\t"<<Reg[i*2+1].val;
             //<<"\tlabel:\t"<<Reg[i*2+1].label<<'\n';
+            std::cout<<'\n';
         }
     }
 };

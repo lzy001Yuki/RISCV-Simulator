@@ -4,7 +4,8 @@
 template<class T, int N>
 class Queue{
     friend class ReorderBuffer;
-private:
+
+public:
     T data[N];
     int head = 0;
     int tail = 0;

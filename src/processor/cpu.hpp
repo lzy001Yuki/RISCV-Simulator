@@ -32,6 +32,9 @@ private:
         Decode decoder(code);
         decoder.decode();
         //std::cout<<"fetch\t"<<decoder<<'\n';
+        if (decoder.orderType == BLTU) {
+            int y = 2;
+        }
         if (code == 0x0ff00513) {
             opq.end = true;
             opq.enQueue(PC, decoder, false);
@@ -63,6 +66,7 @@ private:
      * else only need enQueue, save rd
      * */
     void issue() {
+        //std::cout<<"issue\n";
         //if (opq.stall) return;
         if (rob.full()) return;
         if (opq.empty()) {
@@ -72,9 +76,10 @@ private:
         opNode curInstr = opq.front();
         //std::cout<<"issue\t"<<curInstr.decode<<'\n';
         fetch();
-        if (curInstr.decode.code ==  3907492579) {
+        if (curInstr.decode.orderType == BLTU) {
             int y = 2;
         }
+
         if (curInstr.decode.code == 19998243) {
             int y = 2;
         }
@@ -98,6 +103,7 @@ private:
             if (lsb.full()) return;
             // no need for dest, because no rd
             lsb.Issue(rob, reg, curInstr.decode, clk);
+
             u32 dest = 0;
             if (curInstr.decode.type == 'L') dest = curInstr.decode.rd;
             rob.Issue(curInstr.decode, curInstr.pc, dest, false, reg);
@@ -111,6 +117,7 @@ private:
         opq.deQueue();
     }
     void execute() {
+        //std::cout<<"execute\n";
         rsNode ans = rs.Calc();
         if (rob.robBuffer[ans.label].decode.code == 3907492579) {
             int y = 2;
@@ -129,6 +136,7 @@ private:
 
     }
     void writeResult() {
+        //std::cout<<"writeResult\n";
         rs.Write(cdb, rob);
         rob.fetchData(cdb);
         rs.fetchData(cdb);
@@ -140,6 +148,7 @@ private:
         cdb.flushCDB();
     }
     void commit() {
+        //std::cout<<"commit\n";
         lsb.Store(mem, rob);
         if (lsb.cur.storeTime) return;
         if (rob.empty()) return;
@@ -148,10 +157,15 @@ private:
             return;
         }
         com++;
+        if (com == 132) {
+            int y = 2;
+        }
         if (comNode.decode.code == 12969571) {
             int y = 2;
         }
-        std::cout<<"commit\t"<<comNode.decode;
+        if (comNode.decode.orderType == BLTU) {
+            int y = 2;
+        }
         if (comNode.decode.code == 0x0ff00513) {
             std::cout<<std::dec<<(reg.Reg[10].val & 255)<<'\n';
             exit(0);
@@ -180,6 +194,8 @@ private:
                 //exit(0);
             }
         }
+        //std::cout<<"commit\t"<<comNode.decode;
+        //reg.print();
     }
 public:
     u32 PC = 0;
@@ -190,6 +206,7 @@ public:
         std::string str;
         u32 pc = 0;
         while (getline(std::cin, str)) {
+            //if (str[0] != '@' && !(str[0] >= '0' && str[0] <= '9') && !(str[0] >= 'A' && str[0] <= 'F') && str.size() != 0) break;
             if (str[0] == '@') {
                 std::string s = str.substr(1);
                 u32 sum = 0;
@@ -231,19 +248,41 @@ public:
             //fetch();
             //std::cout<<PC<<'\n';
             //std::cout<<"process----------------\n";
+
             (this->*func[0]) ();
             (this->*func[1]) ();
             (this->*func[2]) ();
             (this->*func[3]) ();
 
+            //print1();
+            //print2();
             //std::cout<<"newPC\t"<<PC<<'\n';
             /*std::cout<<'\n';
             rs.print();
             rob.print();
-            lsb.print();
-            reg.print();*/
+            lsb.print();*/
+            //reg.print();
         }
     }
 
+    void print1() {
+        void (CPU::*func[4]) () = {&CPU::issue, &CPU::execute, &CPU::writeResult, &CPU::commit};
+        (this->*func[0]) ();
+        (this->*func[1]) ();
+        (this->*func[2]) ();
+        (this->*func[3]) ();
+    }
+
+    void print2() {
+        void (CPU::*func[4]) () = {&CPU::issue, &CPU::execute, &CPU::writeResult, &CPU::commit};
+        for (int i = 0; i < 4; i++) {
+            std::string funct;
+            std::getline(std::cin, funct);
+            if (funct == "issue")  (this->*func[0]) ();
+            if (funct == "execute")  (this->*func[1]) ();
+            if (funct == "writeResult")  (this->*func[2]) ();
+            if (funct == "commit")  (this->*func[3]) ();
+        }
+    }
 };
 #endif //RISCV_SIMULATOR_CPU_HPP

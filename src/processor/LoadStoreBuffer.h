@@ -83,6 +83,9 @@ void LoadStoreBuffer::Issue(ReorderBuffer &rob, Register &r, Decode &decode, int
     int index = 0;
     while (lsb[index].busy) index++;
     lsb[index].label = rob.tag;
+    if (rob.tag == 32) {
+        int y = 2;
+    }
     lsb[index].orderType = decode.orderType;
     lsb[index].status = issue;
     lsb[index].busy = true;
@@ -135,6 +138,9 @@ void LoadStoreBuffer::Load(Memory &mem) {
     bool update = false;
     int preLoad = cur.loadTime;
     if (cur.loadTime) {
+        if (lsb[cur.loadIndex].label == 30) {
+            int y = 2;
+        }
         cur.loadTime--;
         // should be the latest lsb.store
         int maxTime = 0;
@@ -152,7 +158,7 @@ void LoadStoreBuffer::Load(Memory &mem) {
                     if (it.V1 == lsb[cur.loadIndex].addr && it.time <= lsb[cur.loadIndex].time) {
                         if (it.time > maxTime) {
                             maxTime = it.time;
-                            ans = it.res;
+                            ans = it.V2;
                         }
                     }
                 }

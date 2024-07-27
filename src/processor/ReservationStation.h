@@ -25,7 +25,7 @@ public:
     friend std::ostream& operator << (std::ostream &os, const rsNode &tmp);
 };
 std::ostream &operator<<(std::ostream &os, const rsNode &tmp) {
-    os << "label\t"<<tmp.label<<'\t'<<
+    os <<"label\t"<<tmp.label<<'\t'<<
     "V1\t"<<tmp.V1<<"\tV2\t"<<tmp.V2<<"\tQ1\t"<<tmp.Q1<<"\tQ2\t"<<tmp.Q2<<
     "\tres\t"<<tmp.res<<'\t'<<"status\t"<<tmp.status<<'\n';
     return os;
@@ -63,6 +63,9 @@ void ReservationStation::flush() {
 void ReservationStation::Issue(ReorderBuffer &rob, Register &r, Decode &decode, u32 &nowPC) {
     int index = 0;
     while (rs[index].busy) index++;
+    if (rob.tag == 31) {
+        int y = 2;
+    }
     rs[index].label = rob.tag; // increment of tag
     rs[index].status = issue;
     rs[index].busy = true;
@@ -99,7 +102,13 @@ rsNode ReservationStation::Calc() {
     for (int i = 0; i < RSSIZE; i++) {
         if (rs[i].status == issue && !rs[i].Q1 && !rs[i].Q2 && rs[i].busy) {
             rs[i].status = execute;
-            if (rs[i].orderType == SUB) {
+            if (rs[i].orderType == BLTU) {
+                int y = 2;
+            }
+            if (rs[i].label == 52) {
+                int y = 2;
+            }
+            if (rs[i].orderType == BGE) {
                 int y = 2;
             }
             rs[i].res = ALU::Calc(rs[i].orderType, rs[i].V1, rs[i].V2, true);
@@ -133,9 +142,6 @@ bool ReservationStation::Write(CDB &cdb, ReorderBuffer &rob) {
 
 void ReservationStation::fetchData(CDB &cdb) {
     if (!cdb.bus.busy) return;
-    if (cdb.bus.label == 22 && cdb.bus.val == 15) {
-        int y = 2;
-    }
     for (int i = 0; i < RSSIZE; i++) {
         if (rs[i].busy) {
             if (rs[i].status == issue) {

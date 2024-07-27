@@ -16,7 +16,7 @@ protected:
     Type orderType;
     std::string t;
     u32 imm = 0;
-    u8 rd = 0, rs1 = 0, rs2 = 0, funct3, funct7;
+    u8 rd = 0, rs1 = 0, rs2 = 0, funct3 = 0, funct7 = 0;
 
     template<class T> T get(int l, int r);
     static u32 extension(u32 data, int len);
@@ -50,7 +50,7 @@ void Decode::decode() {
         case 0x17:
             type = 'U';
             orderType = AUIPC;
-            t = "AUIPC";
+            t =  "AUIPC";
             rd = get<u8>(7, 11);
             imm = extension(get<u32>(12, 31), 20) << 12;
             break;
@@ -58,7 +58,7 @@ void Decode::decode() {
             // U-type
             type = 'U';
             orderType = LUI;
-            t = "LUI";
+            t =  "LUI";
             rd = get<u8>(7, 11);
             imm = extension(get<u32>(12, 31), 20) << 12;
             break;
@@ -72,22 +72,22 @@ void Decode::decode() {
             switch (funct3) {
                 case 0:
                     orderType = SB;
-                    t = "SB";
+                    t =  "SB";
                     break;
                 case 1:
                     orderType = SH;
-                    t = "SH";
+                    t =  "SH";
                     break;
                 case 2:
                     orderType = SW;
-                    t = "SW";
+                    t =  "SW";
                     break;
             }
             break;
         case 0x6f:
             type = 'J';
             orderType = JAL;
-            t = "JAL";
+            t =  "JAL";
             rd = get<u8>(7, 11);
             imm = extension((get<u32>(31, 31)<<20) + (get<u32>(12, 19)<<12) + (get<u32>(20, 20)<<11) +
                             (get<u32>(21, 30)<<1), 21);
@@ -95,7 +95,7 @@ void Decode::decode() {
         case 0x67:
             type ='I';
             orderType = JALR;
-            t = "JALR";
+            t =  "JALR";
             rd = get<u8>(7, 11);
             rs1 = get<u8>(15, 19);
             imm = extension(get<u32>(20, 31)<<1, 13);
@@ -109,23 +109,23 @@ void Decode::decode() {
             switch(funct3) {
                 case 0:
                     orderType = LB;
-                    t = "LB";
+                    t =  "LB";
                     break;
                 case 1:
                     orderType = LH;
-                    t = "LH";
+                    t =  "LH";
                     break;
                 case 2:
                     orderType = LW;
-                    t = "LW";
+                    t =  "LW";
                     break;
                 case 4:
                     orderType = LBU;
-                    t = "LBU";
+                    t =  "LBU";
                     break;
                 case 5:
                     orderType = LHU;
-                    t = "LHU";
+                    t =  "LHU";
                     break;
             }
             break;
@@ -140,46 +140,46 @@ void Decode::decode() {
                 case 0:
                     if ((funct7 >> 5) & 1) {
                         orderType = SUB;
-                        t = "SUB";
+                        t =  "SUB";
                     }
                     else {
                         orderType = ADD;
-                        t = "ADD";
+                        t =  "ADD";
                     }
                     break;
                 case 1:
                     orderType = SLL;
-                    t = "SLL";
+                    t =  "SLL";
                     break;
                 case 2:
                     orderType = SLT;
-                    t = "SLT";
+                    t =  "SLT";
                     break;
                 case 3:
                     orderType = SLTU;
-                    t = "SLTU";
+                    t =  "SLTU";
                     break;
                 case 4:
                     orderType = XOR;
-                    t = "XOR";
+                    t =  "XOR";
                     break;
                 case 5:
                     if ((funct7 >> 5) & 1) {
                         orderType = SRA;
-                        t = "SRA";
+                        t =  "SRA";
                     }
                     else {
                         orderType = SRL;
-                        t = "SRL";
+                        t =  "SRL";
                     }
                     break;
                 case 6:
                     orderType = OR;
-                    t = "OR";
+                    t =  "OR";
                     break;
                 case 7:
                     orderType = AND;
-                    t = "AND";
+                    t =  "AND";
                     break;
             }
             break;
@@ -192,27 +192,27 @@ void Decode::decode() {
             switch(funct3) {
                 case 0:
                     orderType = BEQ;
-                    t = "BEQ";
+                    t =  "BEQ";
                     break;
                 case 1:
                     orderType = BNE;
-                    t = "BNE";
+                    t =  "BNE";
                     break;
                 case 4:
                     orderType = BLT;
-                    t = "BLT";
+                    t =  "BLT";
                     break;
                 case 5:
                     orderType = BGE;
-                    t = "BGE";
+                    t =  "BGE";
                     break;
                 case 6:
                     orderType = BLTU;
-                    t = "BLTU";
+                    t =  "BLTU";
                     break;
                 case 7:
                     orderType = BGEU;
-                    t = "BGEU";
+                    t =  "BGEU";
                     break;
             }
             break;
@@ -225,48 +225,48 @@ void Decode::decode() {
             switch(funct3) {
                 case 0:
                     orderType = ADDI;
-                    t = "ADDI";
+                    t =  "ADDI";
                     imm = extension(get<u32> (20, 31), 12);
                     break;
                 case 1:
                     orderType = SLLI;
-                    t = "SLLI";
+                    t =  "SLLI";
                     imm = get<u32>(20, 31);
                     break;
                 case 2:
                     orderType = SLTI;
-                    t = "SLTI";
+                    t =  "SLTI";
                     imm = extension(get<u32> (20, 31), 12);
                     break;
                 case 3:
                     orderType = SLTUI;
-                    t = "SLTUI";
+                    t =  "SLTUI";
                     imm = extension(get<u32>(20, 31), 12);
                     break;
                 case 4:
                     orderType = XORI;
-                    t = "XORI";
+                    t =  "XORI";
                     imm = extension(get<u32>(20, 31), 12);
                     break;
                 case 5:
                     imm = get<u32>(20, 31);
                     if ((imm & 10) >> 1) {
                         orderType = SRAI;
-                        t = "SRAI";
+                        t =  "SRAI";
                         imm = imm << 2 >> 2;
                     } else {
                         orderType = SRLI;
-                        t = "SRLI";
+                        t =  "SRLI";
                     }
                     break;
                 case 6:
                     orderType = ORI;
-                    t = "ORI";
+                    t =  "ORI";
                     imm = extension(get<u32>(20, 31), 12);;
                     break;
                 case 7:
                     orderType = ANDI;
-                    t = "ANDI";
+                    t =  "ANDI";
                     imm = extension(get<u32>(20, 31), 12);
                     break;
             }
@@ -277,7 +277,7 @@ void Decode::decode() {
 }
 
 std::ostream& operator<< (std::ostream& os, const Decode &tmp) {
-    //std::cout<<tmp.t<<'\t'<<"rd\t"<<(int)tmp.rd<<"\trs1\t"<<(int)tmp.rs1<<"\trs2\t"<<(int)tmp.rs2<<"\timm\t"<<tmp.imm<<'\t';
-    std::cout<<tmp.t<<'\t'<<tmp.code<<'\t'<<(int)tmp.rs1<<'\t'<<(int)tmp.rs2<<'\t'<<(int)tmp.rd<<'\t'<<tmp.imm<<'\n';
+    std::cout<<tmp.t<<'\t'<<"rd\t"<<(int)tmp.rd<<"\trs1\t"<<(int)tmp.rs1<<"\trs2\t"<<(int)tmp.rs2<<"\timm\t"<<tmp.imm<<'\n';
+    //std::cout<<tmp.code<<'\t'<<(int)tmp.rs1<<'\t'<<(int)tmp.rs2<<'\t'<<(int)tmp.rd<<'\t'<<tmp.imm<<'\n';
 }
 #endif //RISCV_SIMULATOR_DECODE_H
