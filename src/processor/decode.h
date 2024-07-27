@@ -36,15 +36,9 @@ T Decode::get(int l, int r) {
 
 u32 Decode::extension(u32 data, int len) {
     if (len == 32) return data;
-    if ((data>>(len - 1) & 1) == 0) return data;
-    else {
-        u32 tmp = 1;
-        for (int i = 0; i < data - len; i++) {
-            tmp = (tmp<<1) + 1;
-        }
-        tmp = tmp<<len;
-        return data | tmp;
-    }
+    u32 ans = 0;
+    if (data >> (len - 1) & 1) ans = 0xffffffff>>len<<len;
+    return ans | data;
 }
 
 void Decode::decode() {
