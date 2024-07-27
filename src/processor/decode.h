@@ -24,7 +24,7 @@ public:
     Decode() = default;
     explicit Decode(u32 &input) : code(input){}
     void decode();
-    void print();
+    friend std::ostream & operator<<(std::ostream &os, const Decode &tmp);
 };
 
 template<class T>
@@ -49,6 +49,9 @@ u32 Decode::extension(u32 data, int len) {
 
 void Decode::decode() {
     u8 op = get<u8>(0, 6);
+    if (code == 33950819) {
+        int y = 2;
+    }
     switch(op) {
         case 0x17:
             type = 'U';
@@ -92,7 +95,6 @@ void Decode::decode() {
             orderType = JAL;
             t = "JAL";
             rd = get<u8>(7, 11);
-            rs1 = get<u8>(15, 19);
             imm = extension((get<u32>(31, 31)<<20) + (get<u32>(12, 19)<<12) + (get<u32>(20, 20)<<11) +
                             (get<u32>(21, 30)<<1), 21);
             break;
@@ -236,6 +238,7 @@ void Decode::decode() {
                     orderType = SLLI;
                     t = "SLLI";
                     imm = get<u32>(20, 31);
+                    break;
                 case 2:
                     orderType = SLTI;
                     t = "SLTI";
@@ -279,7 +282,8 @@ void Decode::decode() {
     }
 }
 
-void Decode::print() {
-    std::cout<<type<<'\t'<<t<<'\t'<<code<<'\t'<<(int)rs1<<'\t'<<(int)rs2<<'\t'<<(int)rd<<'\t'<<imm<<'\n';
+std::ostream& operator<< (std::ostream& os, const Decode &tmp) {
+    //std::cout<<tmp.t<<'\t'<<"rd\t"<<(int)tmp.rd<<"\trs1\t"<<(int)tmp.rs1<<"\trs2\t"<<(int)tmp.rs2<<"\timm\t"<<tmp.imm<<'\t';
+    std::cout<<tmp.t<<'\t'<<tmp.code<<'\t'<<(int)tmp.rs1<<'\t'<<(int)tmp.rs2<<'\t'<<(int)tmp.rd<<'\t'<<tmp.imm<<'\n';
 }
 #endif //RISCV_SIMULATOR_DECODE_H

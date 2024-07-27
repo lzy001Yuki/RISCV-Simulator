@@ -3,6 +3,7 @@
 
 template<class T, int N>
 class Queue{
+    friend class ReorderBuffer;
 private:
     T data[N];
     int head = 0;
@@ -26,9 +27,19 @@ public:
         return data[index];
     }
     int size() {return length;}
-    void clear() {head = tail;}
+    void clear() {
+        head = tail = 0;
+        length = 0;
+    }
     T front() {return data[head];}
     T back() {return data[tail - 1];} // may over index
+    void print() {
+        int cur = head;
+        while (cur != tail) {
+            std::cout<<data[cur];
+            cur = (cur + 1) % N;
+        }
+    }
 };
 
 #endif //RISCV_SIMULATOR_QUEUE_HPP

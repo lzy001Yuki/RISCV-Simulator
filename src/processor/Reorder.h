@@ -29,7 +29,13 @@ private:
 public:
     robNode() = default;
     explicit robNode(Decode &de, u32 &now, u32 &des, bool j) :decode(de), nowPC(now), dest(des), jump(j){}
+    friend std::ostream& operator<<(std::ostream &os, const robNode &tmp);
 };
+std::ostream &operator<<(std::ostream &os, const robNode &tmp) {
+    os<<tmp.label<<'\t'<<tmp.decode;
+    os<<"nowPC\t"<<tmp.nowPC<<"\tdest\t"<<tmp.dest<<"\tres\t"<<tmp.res<<'\n';
+    return os;
+}
 
 class ReorderBuffer{
 public:
@@ -98,10 +104,7 @@ void ReorderBuffer::pop() {
 }
 robNode ReorderBuffer::front() {return robBuffer.front();}
 void ReorderBuffer::print() {
-    std::cout<<"---------------------\n";
-    for (int i = 0; i < robBuffer.size(); i++) {
-        std::cout<<robBuffer[i].decode.t<<'\t'<<robBuffer[i].ready<<'\n';
-    }
-    std::cout<<"------------------------\n";
+    std::cout<<"ReorderBuffer Status ----------------------------\n";
+    robBuffer.print();
 }
 #endif //RISCV_SIMULATOR_REORDER_H
