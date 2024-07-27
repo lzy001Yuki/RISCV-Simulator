@@ -148,16 +148,13 @@ private:
             return;
         }
         com++;
-        if (comNode.decode.code == 3907492579) {
+        if (comNode.decode.code == 12969571) {
             int y = 2;
         }
-        //std::cout<<"commit\t"<<comNode.decode;
+        std::cout<<"commit\t"<<comNode.decode;
         if (comNode.decode.code == 0x0ff00513) {
             std::cout<<std::dec<<(reg.Reg[10].val & 255)<<'\n';
             exit(0);
-        }
-        if (com == 517772) {
-            //exit(0);
         }
         if (comNode.decode.type != 'S' && comNode.decode.type != 'B') {
             rob.commit(reg, cdb);
@@ -230,7 +227,7 @@ public:
             }
             //std::cout<<clk<<" ";
             //std::cout<<"PC:"<<PC<<"--------------------\n";
-            //std::shuffle(func, func + 4, std::mt19937(std::random_device()()));
+            std::shuffle(func, func + 4, std::mt19937(std::random_device()()));
             //fetch();
             //std::cout<<PC<<'\n';
             //std::cout<<"process----------------\n";

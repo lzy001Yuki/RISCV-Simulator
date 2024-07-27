@@ -167,7 +167,7 @@ void LoadStoreBuffer::Load(Memory &mem) {
             update = true;
         }
         if (!update) {
-            if (!cur.loadTime) {
+            if (!cur.loadTime && cur.loadIndex != -1) {
                 lsb[cur.loadIndex].status = write;
                 //std::cout << "load\t" << lsb[cur.loadIndex];
                 if (lsb[cur.loadIndex].orderType == LB)

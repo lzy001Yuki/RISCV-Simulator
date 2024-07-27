@@ -99,7 +99,7 @@ rsNode ReservationStation::Calc() {
     for (int i = 0; i < RSSIZE; i++) {
         if (rs[i].status == issue && !rs[i].Q1 && !rs[i].Q2 && rs[i].busy) {
             rs[i].status = execute;
-            if (rs[i].label == 23 && rs[i].orderType == BNE) {
+            if (rs[i].orderType == SUB) {
                 int y = 2;
             }
             rs[i].res = ALU::Calc(rs[i].orderType, rs[i].V1, rs[i].V2, true);
