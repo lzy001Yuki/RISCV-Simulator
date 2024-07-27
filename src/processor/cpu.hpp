@@ -230,7 +230,7 @@ public:
             }
             //std::cout<<clk<<" ";
             //std::cout<<"PC:"<<PC<<"--------------------\n";
-            std::shuffle(func, func + 4, std::mt19937(std::random_device()()));
+            //std::shuffle(func, func + 4, std::mt19937(std::random_device()()));
             //fetch();
             //std::cout<<PC<<'\n';
             //std::cout<<"process----------------\n";
