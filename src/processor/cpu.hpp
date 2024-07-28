@@ -156,14 +156,12 @@ private:
             return;
         }
         com++;
-        if (clk == 4827) {
-            int y = 2;
-        }
         if (comNode.label == 1 && comNode.res == 45 && comNode.decode.orderType == LW) {
             int y = 2;
         }
-        if (com == 140724) {
+        if (com == 2000000) {
             int y = 0;
+            //exit(0);
         }
         if (comNode.decode.code == 0x0ff00513) {
             //std::cout<<clk<<'\n';
@@ -235,31 +233,22 @@ public:
 
     }
     void work() {
-        void (CPU::*func[4]) () = {&CPU::issue, &CPU::execute, &CPU::writeResult, &CPU::commit};
+        /*void (CPU::*func[4]) () = {&CPU::issue, &CPU::execute, &CPU::writeResult, &CPU::commit};
         while (true) {
             clk++;
-            if (PC % 4) {
-                int y = 2;
-            }
-            if (clk == 843) {
-                int y = 2;
-            }
-            if (rs.rs[5].orderType == BNE && rs.rs[5].V2 == 1 && rs.rs[5].label == 23) {
-                int y = 2;
-            }
             //std::cout<<clk<<" ";
             //std::cout<<"PC:"<<PC<<"--------------------\n";
             std::shuffle(func, func + 4, std::mt19937(std::random_device()()));
             //fetch();
             //std::cout<<PC<<'\n';
             //std::cout<<"process----------------\n"
-
-
             (this->*func[0]) ();
             (this->*func[1]) ();
             (this->*func[2]) ();
             (this->*func[3]) ();
-
+            if (clk == 110576788) {
+                exit(0);
+            }
             //print1();
             //print2();
             //std::cout<<"newPC\t"<<PC<<'\n';
@@ -268,6 +257,19 @@ public:
             //rob.print();
             //lsb.print();
             //reg.print();
+        }*/
+        std::random_device gen;
+        std::mt19937 rd(gen());
+        int flag[4] = {1, 2, 3, 4};
+        while (true) {
+            ++clk;
+            std::shuffle(flag, flag + 4, rd);
+            for (int i = 0; i < 4; i++) {
+                if (flag[i] == 1) issue();
+                if (flag[i] == 2) execute();
+                if (flag[i] == 3) writeResult();
+                if (flag[i] == 4) commit();
+            }
         }
     }
 

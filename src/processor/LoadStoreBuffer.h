@@ -2,7 +2,7 @@
 #define RISCV_SIMULATOR_LOADSTOREBUFFER_H
 #include"ReservationStation.h"
 #include"Memory.hpp"
-const int LSBSIZE = 8;
+const int LSBSIZE = 3;
 enum nodeType{load, store};
 class lsbNode: protected rsNode{
     friend class LoadStoreBuffer;
