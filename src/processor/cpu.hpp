@@ -86,24 +86,23 @@ private:
         // rob/rs/cdb/reg
         if (curInstr.decode.type == 'I' || curInstr.decode.type == 'R') {
             // to rob & rs
-            rs.Issue(rob, reg, curInstr.decode, curInstr.pc);
+            if (!rs.Issue(rob, reg, curInstr.decode, curInstr.pc)) return;
             u32 dest = (u32) curInstr.decode.rd;
             rob.Issue(curInstr.decode, curInstr.pc, dest, false, reg);
         } else if (curInstr.decode.type == 'U') {
             // no need for execute & issue
             u32 dest = (u32) curInstr.decode.rd;
-            rs.Issue(rob, reg, curInstr.decode, curInstr.pc);
+            if (!rs.Issue(rob, reg, curInstr.decode, curInstr.pc)) return;
             rob.Issue(curInstr.decode, curInstr.pc, dest, false, reg);
         } else if (curInstr.decode.type == 'B') {
             if (rs.full()) return;
             u32 dest = curInstr.decode.imm + curInstr.pc;
-            rs.Issue(rob, reg, curInstr.decode, curInstr.pc);
+            if (!rs.Issue(rob, reg, curInstr.decode, curInstr.pc)) return;
             rob.Issue(curInstr.decode, curInstr.pc, dest, curInstr.jump, reg);
         } else if (curInstr.decode.type == 'S' || curInstr.decode.type == 'L') {
             if (lsb.full()) return;
             // no need for dest, because no rd
-            lsb.Issue(rob, reg, curInstr.decode, clk);
-
+            if (!lsb.Issue(rob, reg, curInstr.decode, clk)) return;
             u32 dest = 0;
             if (curInstr.decode.type == 'L') dest = curInstr.decode.rd;
             rob.Issue(curInstr.decode, curInstr.pc, dest, false, reg);
@@ -111,7 +110,7 @@ private:
             // JALR belongs to 'I' type
             // J type -->JAL
             u32 dest = (u32) curInstr.decode.rd;
-            rs.Issue(rob, reg, curInstr.decode, curInstr.pc);
+            if (!rs.Issue(rob, reg, curInstr.decode, curInstr.pc)) return;
             rob.Issue(curInstr.decode, curInstr.pc, dest, true, reg);
         }
         opq.deQueue();
@@ -157,16 +156,17 @@ private:
             return;
         }
         com++;
-        if (com == 132) {
+        if (clk == 4827) {
             int y = 2;
         }
-        if (comNode.decode.code == 12969571) {
+        if (comNode.label == 1 && comNode.res == 45 && comNode.decode.orderType == LW) {
             int y = 2;
         }
-        if (comNode.decode.orderType == BLTU) {
-            int y = 2;
+        if (com == 140724) {
+            int y = 0;
         }
         if (comNode.decode.code == 0x0ff00513) {
+            //std::cout<<clk<<'\n';
             std::cout<<std::dec<<(reg.Reg[10].val & 255)<<'\n';
             exit(0);
         }
@@ -182,6 +182,7 @@ private:
                 pre.update(comNode.nowPC, true);
                 rob.pop();
             } else {
+                //std::cout<<"false prediction\n";
                 if (comNode.res) PC = comNode.dest;
                 else PC = comNode.nowPC + 4;
                 pre.update(comNode.nowPC, false);
@@ -189,12 +190,13 @@ private:
                 rs.flush();
                 lsb.flush();
                 rob.flushRob();
+                cdb.flushCDB();
                 reg.flushReg();
                 fetch();
                 //exit(0);
             }
         }
-        //std::cout<<"commit\t"<<comNode.decode;
+        //std::cout<<"commit\t"<<comNode;
         //reg.print();
     }
 public:
@@ -206,7 +208,7 @@ public:
         std::string str;
         u32 pc = 0;
         while (getline(std::cin, str)) {
-            //if (str[0] != '@' && !(str[0] >= '0' && str[0] <= '9') && !(str[0] >= 'A' && str[0] <= 'F') && str.size() != 0) break;
+            if (str[0] != '@' && !(str[0] >= '0' && str[0] <= '9') && !(str[0] >= 'A' && str[0] <= 'F') && str.size() != 0) break;
             if (str[0] == '@') {
                 std::string s = str.substr(1);
                 u32 sum = 0;
@@ -236,7 +238,10 @@ public:
         void (CPU::*func[4]) () = {&CPU::issue, &CPU::execute, &CPU::writeResult, &CPU::commit};
         while (true) {
             clk++;
-            if (clk == 1308) {
+            if (PC % 4) {
+                int y = 2;
+            }
+            if (clk == 843) {
                 int y = 2;
             }
             if (rs.rs[5].orderType == BNE && rs.rs[5].V2 == 1 && rs.rs[5].label == 23) {
@@ -247,7 +252,8 @@ public:
             std::shuffle(func, func + 4, std::mt19937(std::random_device()()));
             //fetch();
             //std::cout<<PC<<'\n';
-            //std::cout<<"process----------------\n";
+            //std::cout<<"process----------------\n"
+
 
             (this->*func[0]) ();
             (this->*func[1]) ();
@@ -257,10 +263,10 @@ public:
             //print1();
             //print2();
             //std::cout<<"newPC\t"<<PC<<'\n';
-            /*std::cout<<'\n';
-            rs.print();
-            rob.print();
-            lsb.print();*/
+            //std::cout<<'\n';
+            //rs.print();
+            //rob.print();
+            //lsb.print();
             //reg.print();
         }
     }

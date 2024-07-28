@@ -40,7 +40,7 @@ public:
     bool full();
     void flush();
     rsNode Calc();
-    void Issue(ReorderBuffer &rob, Register &r, Decode &decode, u32 &nowPC);
+    bool Issue(ReorderBuffer &rob, Register &r, Decode &decode, u32 &nowPC);
     bool Write(CDB &cdb, ReorderBuffer &rob);
     void fetchData(CDB &cdb);
     void print();;
@@ -60,9 +60,12 @@ void ReservationStation::flush() {
         rss = rsNode();
     }
 }
-void ReservationStation::Issue(ReorderBuffer &rob, Register &r, Decode &decode, u32 &nowPC) {
+bool ReservationStation::Issue(ReorderBuffer &rob, Register &r, Decode &decode, u32 &nowPC) {
     int index = 0;
-    while (rs[index].busy) index++;
+    while (rs[index].busy) {
+        index++;
+    }
+    if (index >= 8) return false;
     if (rob.tag == 31) {
         int y = 2;
     }
@@ -74,11 +77,11 @@ void ReservationStation::Issue(ReorderBuffer &rob, Register &r, Decode &decode, 
         rs[index].V1 = decode.imm;
         if (decode.orderType == LUI) rs[index].V2 = 0;
         else if (decode.orderType == AUIPC) rs[index].V2 = nowPC;
-        return;
+        return true;
     } else if (decode.type == 'J') {
         rs[index].V1 = 4;
         rs[index].V2 = nowPC;
-        return;
+        return true;
     }
     // I-Type rs+imm
     int label1 = r.Reg[decode.rs1].label;
@@ -96,6 +99,7 @@ void ReservationStation::Issue(ReorderBuffer &rob, Register &r, Decode &decode, 
             else rs[index].Q2 = label2;
         } else rs[index].V2 = r.Reg[decode.rs2].val;
     }
+    return true;
 }
 
 rsNode ReservationStation::Calc() {

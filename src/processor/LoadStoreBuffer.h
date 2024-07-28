@@ -46,7 +46,7 @@ public:
     LoadStoreBuffer() = default;
     bool full();
     void flush();
-    void Issue(ReorderBuffer &rob, Register &r, Decode &decode, int t);
+    bool Issue(ReorderBuffer &rob, Register &r, Decode &decode, int t);
     void Execute(ReorderBuffer &rob);
     void Load(Memory &mem);
     void Commit(robNode &rn);
@@ -79,9 +79,10 @@ void LoadStoreBuffer::flush() {
     }
 }
 
-void LoadStoreBuffer::Issue(ReorderBuffer &rob, Register &r, Decode &decode, int t) {
+bool LoadStoreBuffer::Issue(ReorderBuffer &rob, Register &r, Decode &decode, int t) {
     int index = 0;
     while (lsb[index].busy) index++;
+    if (index >= 8) return false;
     lsb[index].label = rob.tag;
     if (rob.tag == 32) {
         int y = 2;
@@ -113,6 +114,7 @@ void LoadStoreBuffer::Issue(ReorderBuffer &rob, Register &r, Decode &decode, int
             else lsb[index].Q2 = label2;
         } else lsb[index].V2 = r.Reg[decode.rs2].val;
     }
+    return true;
 }
 
 void LoadStoreBuffer::Execute(ReorderBuffer &rob) {
@@ -136,9 +138,8 @@ void LoadStoreBuffer::Execute(ReorderBuffer &rob) {
 
 void LoadStoreBuffer::Load(Memory &mem) {
     bool update = false;
-    int preLoad = cur.loadTime;
     if (cur.loadTime) {
-        if (lsb[cur.loadIndex].label == 30) {
+        if (lsb[cur.loadIndex].label == 1) {
             int y = 2;
         }
         cur.loadTime--;
@@ -167,6 +168,9 @@ void LoadStoreBuffer::Load(Memory &mem) {
         if (maxTime) {
             lsb[cur.loadIndex].res = ans;
             lsb[cur.loadIndex].status = write;
+            if (lsb[cur.loadIndex].res == 45 && lsb[cur.loadIndex].orderType == LW) {
+                int y = 2;
+            }
             //std::cout << "Load through store\t" << lsb[cur.loadIndex];
             cur.loadIndex = -1;
             cur.loadTime = 0;
@@ -186,11 +190,15 @@ void LoadStoreBuffer::Load(Memory &mem) {
                     lsb[cur.loadIndex].res = (u32) mem.getAddr<u8, 8>(lsb[cur.loadIndex].addr);
                 else if (lsb[cur.loadIndex].orderType == LHU)
                     lsb[cur.loadIndex].res = (u32) mem.getAddr<u16, 16>(lsb[cur.loadIndex].addr);
+                if (lsb[cur.loadIndex].res == 45 && lsb[cur.loadIndex].orderType == LW) {
+                    int y = 2;
+                }
                 cur.loadIndex = -1;
                 update = true;
             }
         }
     } else update = true;
+
     if (update) {
         for (int i = 0; i < LSBSIZE; i++) {
             if (lsb[i].los == load && lsb[i].status == execute) {
