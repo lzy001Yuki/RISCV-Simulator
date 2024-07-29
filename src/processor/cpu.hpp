@@ -26,9 +26,6 @@ private:
     void fetch() {
         if (opq.end || opq.full() || opq.stall) return;
         u32 code = mem.getAddr<u32, 32>(PC);
-        if (code ==  4217368687) {
-            int y = 2;
-        }
         Decode decoder(code);
         decoder.decode();
         //std::cout<<"fetch\t"<<decoder<<'\n';
@@ -76,13 +73,6 @@ private:
         opNode curInstr = opq.front();
         //std::cout<<"issue\t"<<curInstr.decode<<'\n';
         fetch();
-        if (curInstr.decode.orderType == BLTU) {
-            int y = 2;
-        }
-
-        if (curInstr.decode.code == 19998243) {
-            int y = 2;
-        }
         // rob/rs/cdb/reg
         if (curInstr.decode.type == 'I' || curInstr.decode.type == 'R') {
             // to rob & rs
@@ -118,9 +108,6 @@ private:
     void execute() {
         //std::cout<<"execute\n";
         rsNode ans = rs.Calc();
-        if (rob.robBuffer[ans.label].decode.code == 3907492579) {
-            int y = 2;
-        }
         if (ans.busy) {
             if (ans.orderType == JALR) {
                 u32 copy = PC;
@@ -131,8 +118,6 @@ private:
         }
         lsb.Load(mem);
         lsb.Execute(rob);
-
-
     }
     void writeResult() {
         //std::cout<<"writeResult\n";
@@ -156,13 +141,6 @@ private:
             return;
         }
         com++;
-        if (comNode.label == 1 && comNode.res == 45 && comNode.decode.orderType == LW) {
-            int y = 2;
-        }
-        if (com == 17561) {
-            int y = 0;
-            //exit(0);
-        }
         if (comNode.decode.code == 0x0ff00513) {
             //std::cout<<clk<<'\n';
             std::cout<<std::dec<<(reg.Reg[10].val & 255)<<'\n';
@@ -233,37 +211,11 @@ public:
 
     }
     void work() {
-        /*void (CPU::*func[4]) () = {&CPU::issue, &CPU::execute, &CPU::writeResult, &CPU::commit};
-        while (true) {
-            clk++;
-            //std::cout<<clk<<" ";
-            //std::cout<<"PC:"<<PC<<"--------------------\n";
-            std::shuffle(func, func + 4, std::mt19937(std::random_device()()));
-            //fetch();
-            //std::cout<<PC<<'\n';
-            //std::cout<<"process----------------\n"
-            (this->*func[0]) ();
-            (this->*func[1]) ();
-            (this->*func[2]) ();
-            (this->*func[3]) ();
-            if (clk == 110576788) {
-                exit(0);
-            }
-            //print1();
-            //print2();
-            //std::cout<<"newPC\t"<<PC<<'\n';
-            //std::cout<<'\n';
-            //rs.print();
-            //rob.print();
-            //lsb.print();
-            //reg.print();
-        }*/
         std::random_device gen;
         std::mt19937 rd(gen());
         int flag[4] = {1, 2, 3, 4};
         while (true) {
             ++clk;
-            //if (clk == 761743 * 2) exit(0);
             std::shuffle(flag, flag + 4, rd);
             for (int i = 0; i < 4; i++) {
                 if (flag[i] == 1) issue();
@@ -271,26 +223,6 @@ public:
                 if (flag[i] == 3) writeResult();
                 if (flag[i] == 4) commit();
             }
-        }
-    }
-
-    void print1() {
-        void (CPU::*func[4]) () = {&CPU::issue, &CPU::execute, &CPU::writeResult, &CPU::commit};
-        (this->*func[0]) ();
-        (this->*func[1]) ();
-        (this->*func[2]) ();
-        (this->*func[3]) ();
-    }
-
-    void print2() {
-        void (CPU::*func[4]) () = {&CPU::issue, &CPU::execute, &CPU::writeResult, &CPU::commit};
-        for (int i = 0; i < 4; i++) {
-            std::string funct;
-            std::getline(std::cin, funct);
-            if (funct == "issue")  (this->*func[0]) ();
-            if (funct == "execute")  (this->*func[1]) ();
-            if (funct == "writeResult")  (this->*func[2]) ();
-            if (funct == "commit")  (this->*func[3]) ();
         }
     }
 };

@@ -70,9 +70,6 @@ bool ReorderBuffer::Issue(Decode &input, u32 &nowPC, u32 &dest, bool pred, Regis
     robNode newNode(input, nowPC, dest, pred);
     // dest is not necessarily the destination register
     // can try r.Reg[newNode.dest].label
-    if (tag == 52) {
-        int y = 2;
-    }
     if (newNode.decode.rd) r.Reg[newNode.decode.rd].label = tag;
     newNode.label = tag; // rename the register
     tag++;

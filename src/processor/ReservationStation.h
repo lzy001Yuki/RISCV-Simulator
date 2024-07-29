@@ -66,9 +66,6 @@ bool ReservationStation::Issue(ReorderBuffer &rob, Register &r, Decode &decode, 
         index++;
     }
     if (index >= 8) return false;
-    if (rob.tag == 31) {
-        int y = 2;
-    }
     rs[index].label = rob.tag; // increment of tag
     rs[index].status = issue;
     rs[index].busy = true;
@@ -106,15 +103,6 @@ rsNode ReservationStation::Calc() {
     for (int i = 0; i < RSSIZE; i++) {
         if (rs[i].status == issue && !rs[i].Q1 && !rs[i].Q2 && rs[i].busy) {
             rs[i].status = execute;
-            if (rs[i].orderType == BLTU) {
-                int y = 2;
-            }
-            if (rs[i].label == 52) {
-                int y = 2;
-            }
-            if (rs[i].orderType == BGE) {
-                int y = 2;
-            }
             rs[i].res = ALU::Calc(rs[i].orderType, rs[i].V1, rs[i].V2);
             //std::cout<<"ExecRs\t"<<rs[i];
             return rs[i];
@@ -141,7 +129,6 @@ void ReservationStation::Write(CDB &cdb, ReorderBuffer &rob) {
             return;
         }
     }
-    return;
 }
 
 void ReservationStation::fetchData(CDB &cdb) {

@@ -178,9 +178,6 @@ void LoadStoreBuffer::Load(Memory &mem) {
         if (maxTime) {
             lsb[cur.loadIndex].res = ans;
             lsb[cur.loadIndex].status = write;
-            if (lsb[cur.loadIndex].res == 45 && lsb[cur.loadIndex].orderType == LW) {
-                int y = 2;
-            }
             //std::cout << "Load through store\t" << lsb[cur.loadIndex];
             cur.loadIndex = -1;
             cur.loadTime = 0;
@@ -200,9 +197,6 @@ void LoadStoreBuffer::Load(Memory &mem) {
                     lsb[cur.loadIndex].res = (u32) mem.getAddr<u8, 8>(lsb[cur.loadIndex].addr);
                 else if (lsb[cur.loadIndex].orderType == LHU)
                     lsb[cur.loadIndex].res = (u32) mem.getAddr<u16, 16>(lsb[cur.loadIndex].addr);
-                if (lsb[cur.loadIndex].res == 45 && lsb[cur.loadIndex].orderType == LW) {
-                    int y = 2;
-                }
                 cur.loadIndex = -1;
                 update = true;
             }
@@ -263,9 +257,7 @@ void LoadStoreBuffer::Store(Memory &mem, ReorderBuffer &rob) {
             lsbNode curNode = lsb[cur.storeIndex];
             if (curNode.orderType == SB) mem.writeAddr<u8, 8>(curNode.addr, curNode.res & 0xff);
             else if (curNode.orderType == SH) mem.writeAddr<u16, 16>(curNode.addr, curNode.res & 0xffff);
-            else if (curNode.orderType == SW) {
-                mem.writeAddr<u32, 32>(curNode.addr, curNode.res);
-            }
+            else if (curNode.orderType == SW) mem.writeAddr<u32, 32>(curNode.addr, curNode.res);
             lsb[cur.storeIndex].busy = false;
             cur.storeIndex = -1;
         }
