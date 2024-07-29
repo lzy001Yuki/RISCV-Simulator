@@ -3,10 +3,11 @@
 #include"decode.h"
 class ALU{
 public:
-    static u32 Calc(Type &op, u32 &in1, u32 &in2, bool status) {
-        if (!status) return 0;
+    static u32 Calc(Type &op, u32 &in1, u32 &in2) {
         if (op == LUI || op == AUIPC || op == JAL) return in1 + in2;
         if (op == ADD || op == ADDI) return in1 + in2;
+        if (op == LW || op == LB ||  op == LH || op == LBU || op == LHU) return in1 + in2;
+        if (op == SW || op == SB || op == SH) return in1 + in2;
         if (op == SUB) return in1 - in2;
         if (op == BEQ) return in1 == in2;
         if (op == BNE) return in1 != in2;

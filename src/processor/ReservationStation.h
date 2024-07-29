@@ -41,7 +41,7 @@ public:
     void flush();
     rsNode Calc();
     bool Issue(ReorderBuffer &rob, Register &r, Decode &decode, u32 &nowPC);
-    bool Write(CDB &cdb, ReorderBuffer &rob);
+    void Write(CDB &cdb, ReorderBuffer &rob);
     void fetchData(CDB &cdb);
     void print();;
 };
@@ -115,7 +115,7 @@ rsNode ReservationStation::Calc() {
             if (rs[i].orderType == BGE) {
                 int y = 2;
             }
-            rs[i].res = ALU::Calc(rs[i].orderType, rs[i].V1, rs[i].V2, true);
+            rs[i].res = ALU::Calc(rs[i].orderType, rs[i].V1, rs[i].V2);
             //std::cout<<"ExecRs\t"<<rs[i];
             return rs[i];
         }
@@ -124,7 +124,7 @@ rsNode ReservationStation::Calc() {
 }
 
 // write and broadcast are at the same time
-bool ReservationStation::Write(CDB &cdb, ReorderBuffer &rob) {
+void ReservationStation::Write(CDB &cdb, ReorderBuffer &rob) {
     for (int i = 0; i < RSSIZE; i++) {
         if (rs[i].status == execute) {
             //std::cout<<"writeRs\t"<<rs[i];
@@ -138,10 +138,10 @@ bool ReservationStation::Write(CDB &cdb, ReorderBuffer &rob) {
             rs[i].busy = false;
             rs[i].res = 0;
             rs[i] = rsNode();
-            return true;
+            return;
         }
     }
-    return false;
+    return;
 }
 
 void ReservationStation::fetchData(CDB &cdb) {

@@ -2,7 +2,7 @@
 #define RISCV_SIMULATOR_LOADSTOREBUFFER_H
 #include"ReservationStation.h"
 #include"Memory.hpp"
-const int LSBSIZE = 3;
+const int LSBSIZE = 8;
 enum nodeType{load, store};
 class lsbNode: protected rsNode{
     friend class LoadStoreBuffer;
@@ -33,6 +33,7 @@ private:
     int storeIndex = -1;
     int loadTime = 0;
     int storeTime = 0;
+    bool loadStall = false;
 public:
     void zero();
 };
@@ -61,6 +62,7 @@ void timeCnt::zero() {
     storeIndex = -1;
     loadTime = 0;
     storeTime = 0;
+    loadStall = false;
 }
 bool LoadStoreBuffer::full(){
     bool isFull = true;
@@ -84,9 +86,6 @@ bool LoadStoreBuffer::Issue(ReorderBuffer &rob, Register &r, Decode &decode, int
     while (lsb[index].busy) index++;
     if (index >= 8) return false;
     lsb[index].label = rob.tag;
-    if (rob.tag == 32) {
-        int y = 2;
-    }
     lsb[index].orderType = decode.orderType;
     lsb[index].status = issue;
     lsb[index].busy = true;
@@ -105,9 +104,9 @@ bool LoadStoreBuffer::Issue(ReorderBuffer &rob, Register &r, Decode &decode, int
         lsb[index].V1 = decode.imm;
         int label1 = r.Reg[decode.rs1].label;
         if (label1) {
-            if (rob.robBuffer[label1].ready) lsb[index].V1 += rob.robBuffer[label1].res;
+            if (rob.robBuffer[label1].ready) lsb[index].V1 = ALU::Calc(lsb[index].orderType, rob.robBuffer[label1].res, lsb[index].V1);
             else lsb[index].Q1 = label1;
-        } else lsb[index].V1 += r.Reg[decode.rs1].val;
+        } else lsb[index].V1 = ALU::Calc(lsb[index].orderType, r.Reg[decode.rs1].val, lsb[index].V1);
         int label2 = r.Reg[decode.rs2].label;
         if (label2) {
             if (rob.robBuffer[label2].ready) lsb[index].V2 = rob.robBuffer[label2].res;
@@ -121,7 +120,7 @@ void LoadStoreBuffer::Execute(ReorderBuffer &rob) {
     for (int i = 0; i < LSBSIZE; i++) {
         if (lsb[i].status == issue && !lsb[i].Q1 && !lsb[i].Q2 &&lsb[i].busy) {
             if (lsb[i].los == load) {
-                lsb[i].addr = lsb[i].V1 + lsb[i].V2;
+                lsb[i].addr = ALU::Calc(lsb[i].orderType, lsb[i].V1, lsb[i].V2);
                 lsb[i].status = execute;
                 //std::cout<<"ExecLoad\t"<<lsb[i];
             } else {
@@ -139,10 +138,6 @@ void LoadStoreBuffer::Execute(ReorderBuffer &rob) {
 void LoadStoreBuffer::Load(Memory &mem) {
     bool update = false;
     if (cur.loadTime) {
-        if (lsb[cur.loadIndex].label == 1) {
-            int y = 2;
-        }
-        cur.loadTime--;
         // should be the latest lsb.store
         int maxTime = 0;
         u32 ans = 0;
@@ -165,6 +160,21 @@ void LoadStoreBuffer::Load(Memory &mem) {
                 }
             }
         }
+        for (auto &it: lsb) {
+            if (it.busy && it.los == store) {
+                if (it.status == issue) {
+                    if (it.time <= lsb[cur.loadIndex].time && it.time > maxTime) {
+                        if (it.Q1 && it.V1 <= lsb[cur.loadIndex].addr) {
+                            return;
+                        }
+                        if (!it.Q1 && it.V1 == lsb[cur.loadIndex].addr && it.Q2) {
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        cur.loadTime--;
         if (maxTime) {
             lsb[cur.loadIndex].res = ans;
             lsb[cur.loadIndex].status = write;
@@ -200,14 +210,19 @@ void LoadStoreBuffer::Load(Memory &mem) {
     } else update = true;
 
     if (update) {
+        int minTime = -1;
+        int minIndex = -1;
         for (int i = 0; i < LSBSIZE; i++) {
             if (lsb[i].los == load && lsb[i].status == execute) {
                 //std::cout<<"newLoad\t"<<lsb[i];
-                cur.loadIndex = i;
-                cur.loadTime = 3;
-                break;
+                if (minTime == -1 || lsb[i].time < minTime) {
+                    minTime = lsb[i].time;
+                    minIndex = i;
+                }
             }
         }
+        cur.loadIndex = minIndex;
+        cur.loadTime = 3;
     }
 }
 
@@ -246,7 +261,7 @@ void LoadStoreBuffer::Store(Memory &mem, ReorderBuffer &rob) {
         cur.storeTime--;
         if (!cur.storeTime) {
             lsbNode curNode = lsb[cur.storeIndex];
-            if (curNode.orderType == SB) mem.writeAddr<u8, 8>(curNode.addr, curNode.res & 11111111);
+            if (curNode.orderType == SB) mem.writeAddr<u8, 8>(curNode.addr, curNode.res & 0xff);
             else if (curNode.orderType == SH) mem.writeAddr<u16, 16>(curNode.addr, curNode.res & 0xffff);
             else if (curNode.orderType == SW) {
                 mem.writeAddr<u32, 32>(curNode.addr, curNode.res);
@@ -267,7 +282,7 @@ void LoadStoreBuffer::fetchData(CDB &cdb) {
                     it.V1 = cdb.bus.val;
                     it.Q1 = 0;
                 } else {
-                    it.V1 += cdb.bus.val;
+                    it.V1 = ALU::Calc(it.orderType, it.V1, cdb.bus.val);
                     it.Q1 = 0;
                 }
             } else if (it.Q2 == cdb.bus.label) {

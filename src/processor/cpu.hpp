@@ -159,7 +159,7 @@ private:
         if (comNode.label == 1 && comNode.res == 45 && comNode.decode.orderType == LW) {
             int y = 2;
         }
-        if (com == 2000000) {
+        if (com == 17561) {
             int y = 0;
             //exit(0);
         }
@@ -263,6 +263,7 @@ public:
         int flag[4] = {1, 2, 3, 4};
         while (true) {
             ++clk;
+            //if (clk == 761743 * 2) exit(0);
             std::shuffle(flag, flag + 4, rd);
             for (int i = 0; i < 4; i++) {
                 if (flag[i] == 1) issue();
