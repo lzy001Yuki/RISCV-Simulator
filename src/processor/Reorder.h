@@ -47,7 +47,7 @@ public:
     void addRob(robNode &rob, Register &r);
     bool Issue(Decode &input, u32 &nowPC, u32 &dest, bool pred, Register &r);
     void fetchData(CDB &cdb);
-    void commit(Register &r, CDB &cdb);
+    void commit(Register &r, CDB &cdb, robNode &tmp);
     void pop();
     robNode front();
     void print();
@@ -84,18 +84,12 @@ void ReorderBuffer::fetchData(CDB &cdb) {
 }
 
 
-void ReorderBuffer::commit(Register &r, CDB &cdb) {
-    robNode tmp = robBuffer.front();
-    if (tmp.ready) {
-        if (tmp.decode.type != 'B' && tmp.decode.type != 'S') {
-            if (tmp.dest) {
-                r.Reg[tmp.dest].val = tmp.res;
-                cdb.broadcast(tmp.label, tmp.res);
-                // eliminate dependency
-                if (tmp.label == r.Reg[tmp.dest].label) r.Reg[tmp.dest].label = 0;
-            }
-        }
-        robBuffer.pop();
+void ReorderBuffer::commit(Register &r, CDB &cdb, robNode &tmp) {
+    if (tmp.dest) {
+        r.Reg[tmp.dest].val = tmp.res;
+        cdb.broadcast(tmp.label, tmp.res);
+        // eliminate dependency
+        if (tmp.label == r.Reg[tmp.dest].label) r.Reg[tmp.dest].label = 0;
     }
 }
 

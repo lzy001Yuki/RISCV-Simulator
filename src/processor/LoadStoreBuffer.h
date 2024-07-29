@@ -52,7 +52,7 @@ public:
     void Load(Memory &mem);
     void Commit(robNode &rn);
     void Store(Memory &mem, ReorderBuffer &rob);
-    bool Write(CDB &cdb);
+    void Write(CDB &cdb);
     void fetchData(CDB &cdb);
     void print();
 };
@@ -220,22 +220,21 @@ void LoadStoreBuffer::Load(Memory &mem) {
     }
 }
 
-bool LoadStoreBuffer::Write(CDB &cdb) {
+void LoadStoreBuffer::Write(CDB &cdb) {
     for (auto &it: lsb) {
         if (it.status == write && it.los == load && it.busy) {
             //std::cout<<"writeLoad\t"<<it;
             cdb.broadcast(it.label, it.res);
             it.busy = false;
-            return true;
+            return;
         }
         if (it.status == execute && it.los == store) {
             //std::cout<<"writeStore\t"<<it;
             cdb.broadcast(it.label, it.res);
             it.status = write;
-            return true;
+            return;
         }
     }
-    return false;
 }
 
 // no commit until finished

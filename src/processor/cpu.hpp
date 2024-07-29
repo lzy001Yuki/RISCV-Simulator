@@ -29,9 +29,6 @@ private:
         Decode decoder(code);
         decoder.decode();
         //std::cout<<"fetch\t"<<decoder<<'\n';
-        if (decoder.orderType == BLTU) {
-            int y = 2;
-        }
         if (code == 0x0ff00513) {
             opq.end = true;
             opq.enQueue(PC, decoder, false);
@@ -140,14 +137,14 @@ private:
         if (!comNode.ready) {
             return;
         }
-        com++;
         if (comNode.decode.code == 0x0ff00513) {
             //std::cout<<clk<<'\n';
             std::cout<<std::dec<<(reg.Reg[10].val & 255)<<'\n';
             exit(0);
         }
         if (comNode.decode.type != 'S' && comNode.decode.type != 'B') {
-            rob.commit(reg, cdb);
+            rob.commit(reg, cdb, comNode);
+            rob.pop();
             rs.fetchData(cdb);
             lsb.fetchData(cdb);
         } else if (comNode.decode.type == 'S') {
@@ -158,7 +155,6 @@ private:
                 pre.update(comNode.nowPC, true);
                 rob.pop();
             } else {
-                //std::cout<<"false prediction\n";
                 if (comNode.res) PC = comNode.dest;
                 else PC = comNode.nowPC + 4;
                 pre.update(comNode.nowPC, false);
@@ -178,7 +174,6 @@ private:
 public:
     u32 PC = 0;
     int clk = 0;
-    int com = 0;
     CPU() = default;
     void read() {
         std::string str;

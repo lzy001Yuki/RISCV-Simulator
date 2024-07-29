@@ -117,9 +117,6 @@ void ReservationStation::Write(CDB &cdb, ReorderBuffer &rob) {
         if (rs[i].status == execute) {
             //std::cout<<"writeRs\t"<<rs[i];
             rs[i].status = write;
-            if (rs[i].label == 9) {
-                int y = 2;
-            }
             cdb.broadcast(rs[i].label, rs[i].res);
             rob.robBuffer[rs[i].label].ready = true;
             rob.robBuffer[rs[i].label].res = rs[i].res;
