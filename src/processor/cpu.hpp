@@ -43,7 +43,7 @@ private:
                 PC += 4;
             }
         } else {
-            if (decoder.type != 'J' || decoder.rd != 0) opq.enQueue(PC, decoder, false);
+            opq.enQueue(PC, decoder, false);
             if (decoder.orderType == JALR) {
                 opq.stall = true;
                 return;
@@ -55,13 +55,8 @@ private:
     // check if opq is empty
     // issue & decode in the same clockTime
     // goal for issue --> get data from (physical register)
-    /*
-     * if the instruction has rs, then must be issued
-     * else only need enQueue, save rd
-     * */
     void issue() {
         //std::cout<<"issue\n";
-        //if (opq.stall) return;
         if (rob.full()) return;
         if (opq.empty()) {
             fetch();
@@ -77,7 +72,6 @@ private:
             u32 dest = (u32) curInstr.decode.rd;
             rob.Issue(curInstr.decode, curInstr.pc, dest, false, reg);
         } else if (curInstr.decode.type == 'U') {
-            // no need for execute & issue
             u32 dest = (u32) curInstr.decode.rd;
             if (!rs.Issue(rob, reg, curInstr.decode, curInstr.pc)) return;
             rob.Issue(curInstr.decode, curInstr.pc, dest, false, reg);
@@ -88,7 +82,6 @@ private:
             rob.Issue(curInstr.decode, curInstr.pc, dest, curInstr.jump, reg);
         } else if (curInstr.decode.type == 'S' || curInstr.decode.type == 'L') {
             if (lsb.full()) return;
-            // no need for dest, because no rd
             if (!lsb.Issue(rob, reg, curInstr.decode, clk)) return;
             u32 dest = 0;
             if (curInstr.decode.type == 'L') dest = curInstr.decode.rd;
@@ -96,6 +89,11 @@ private:
         } else if (curInstr.decode.type == 'J') {
             // JALR belongs to 'I' type
             // J type -->JAL
+            // x0 register should not be changed!
+            if (curInstr.decode.rd == 0) {
+                opq.deQueue();
+                return;
+            }
             u32 dest = (u32) curInstr.decode.rd;
             if (!rs.Issue(rob, reg, curInstr.decode, curInstr.pc)) return;
             rob.Issue(curInstr.decode, curInstr.pc, dest, true, reg);
@@ -139,6 +137,7 @@ private:
         }
         if (comNode.decode.code == 0x0ff00513) {
             //std::cout<<clk<<'\n';
+            //std::cout<<pre.Accuracy()<<'\n';
             std::cout<<std::dec<<(reg.Reg[10].val & 255)<<'\n';
             exit(0);
         }
@@ -164,8 +163,6 @@ private:
                 rob.flushRob();
                 cdb.flushCDB();
                 reg.flushReg();
-                fetch();
-                //exit(0);
             }
         }
         //std::cout<<"commit\t"<<comNode;
